@@ -32,7 +32,8 @@ jobs:
       - name: Generate Fullstory snippet
         env:
           FS_ORG_ID: ${{ vars.FS_ORG_ID }}
-        run: node -e "import('@fullstory/snippet').then(m => process.stdout.write(m.generateSnippetText({ orgId: process.env.FS_ORG_ID })))" > public/js/fs-snippet.js
+        run: |
+          node -e "import('@fullstory/snippet').then(m => process.stdout.write(m.generateSnippetText({ orgId: process.env.FS_ORG_ID })))" > public/js/fs-snippet.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
