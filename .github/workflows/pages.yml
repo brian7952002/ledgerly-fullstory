@@ -1,0 +1,41 @@
+# Publishes public/ to GitHub Pages. The site runs in "static mode" there: no Node server,
+# the mock CRM runs in the browser, and the ops console points you to the local server.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --omit=dev
+      # Same official snippet the local server serves, written as a static file.
+      - name: Generate Fullstory snippet
+        env:
+          FS_ORG_ID: ${{ vars.FS_ORG_ID }}
+        run: node -e "import('@fullstory/snippet').then(m => process.stdout.write(m.generateSnippetText({ orgId: process.env.FS_ORG_ID })))" > public/js/fs-snippet.js
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - id: deployment
+        uses: actions/deploy-pages@v4

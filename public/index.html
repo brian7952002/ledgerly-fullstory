@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ledgerly - Get paid faster</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="js/fs-snippet.js"></script>
+  <script src="js/attribution.js"></script>
+  <script src="js/experiment.js"></script>
+  <script src="js/analytics.js"></script>
+</head>
+<body data-page="landing">
+  <header>
+    <a class="logo" href="./">ledger<span>ly</span></a>
+    <nav><a href="pricing">Pricing</a><a href="signup">Start free trial</a></nav>
+  </header>
+  <main>
+    <section class="hero">
+      <h1>Send an invoice in 60 seconds.<br />Get paid in days, not months.</h1>
+      <p>Ledgerly is invoicing for freelancers: branded invoices, automatic reminders, and card payments built in.</p>
+      <a class="btn" id="cta-hero" href="pricing">See plans</a>
+    </section>
+    <section class="features">
+      <div class="card"><h3>Invoices that look pro</h3><p>Your logo, your colors, sent from your name.</p></div>
+      <div class="card"><h3>Reminders on autopilot</h3><p>Polite nudges go out so you never chase a client again.</p></div>
+      <div class="card"><h3>Paid by card or ACH</h3><p>Clients pay in one click. Money lands in 2 days.</p></div>
+    </section>
+  </main>
+  <script>
+    Ledgerly.init();
+    document.getElementById('cta-hero').addEventListener('click', function () {
+      Ledgerly.track('CTA Clicked', { cta_id: 'hero_see_plans' });
+    });
+  </script>
+</body>
+</html>

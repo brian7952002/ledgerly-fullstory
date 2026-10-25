@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ledgerly - Start your free trial</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="js/fs-snippet.js"></script>
+  <script src="js/attribution.js"></script>
+  <script src="js/experiment.js"></script>
+  <script src="js/analytics.js"></script>
+</head>
+<body data-page="signup">
+  <header>
+    <a class="logo" href="./">ledger<span>ly</span></a>
+    <nav><a href="pricing">Pricing</a></nav>
+  </header>
+  <main>
+    <h1 style="text-align:center">Start your 14-day free trial</h1>
+    <!-- Privacy: fs-mask hides what people type but keeps the interaction;
+         fs-exclude never records the element at all. -->
+    <form id="signup-form">
+      <label>Full name <input name="name" class="fs-mask" required autocomplete="name" /></label>
+      <label>Work email <input name="email" type="email" class="fs-mask" required autocomplete="email" /></label>
+      <label>Business name <input name="business" class="fs-mask" /></label>
+      <label>Password <input name="password" type="password" class="fs-exclude" required minlength="8" autocomplete="new-password" /></label>
+      <button class="btn" type="submit">Create my account</button>
+      <p class="note">By signing up you agree to our (imaginary) terms.</p>
+    </form>
+  </main>
+  <script>
+    Ledgerly.init();
+    var billingPeriod = new URLSearchParams(location.search).get('billing_period') || 'monthly';
+    var form = document.getElementById('signup-form');
+    var started = false;
+
+    form.addEventListener('focusin', function () {
+      if (started) return;
+      started = true;
+      Ledgerly.track('Signup Started', { billing_period: billingPeriod });
+    });
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var first = Ledgerly.attribution.firstTouch();
+      var variant = Ledgerly.experiment.exposedVariant() || 'not_exposed';
+
+      // Only non-PII attributes go to the mock CRM call. Name/email stay in the form.
+      Ledgerly.api('/api/signup', {
+        anon_id: Ledgerly.experiment.anonId(),
+        acq_campaign: first.campaign, acq_source: first.source,
+        variant: variant, billing_period: billingPeriod,
+        wanted_monthly: sessionStorage.getItem('ledgerly_wanted_monthly') === '1'
+      })
+        .then(function (res) {
+          // Identify with the CRM id. Re-send acquisition + experiment properties so the
+          // identified user carries them, whatever happened to the anonymous history.
+          Ledgerly.identify(res.uid, {
+            displayName: 'Freelancer ' + res.uid.slice(4),
+            plan: 'trial',
+            billing_period: billingPeriod,
+            acq_campaign: first.campaign, acq_source: first.source, acq_medium: first.medium,
+            exp_pricing_page_v2: variant
+          });
+          Ledgerly.track('Signup Completed', { plan: 'trial', billing_period: billingPeriod });
+          localStorage.setItem('ledgerly_uid', res.uid);
+          setTimeout(function () { location.href = 'app'; }, 300);
+        });
+    });
+  </script>
+</body>
+</html>

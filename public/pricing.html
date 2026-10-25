@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ledgerly - Pricing</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="js/fs-snippet.js"></script>
+  <script src="js/attribution.js"></script>
+  <script src="js/experiment.js"></script>
+  <script src="js/analytics.js"></script>
+</head>
+<body data-page="pricing">
+  <header>
+    <a class="logo" href="./">ledger<span>ly</span></a>
+    <nav><a href="pricing">Pricing</a><a href="signup">Start free trial</a></nav>
+  </header>
+  <main>
+    <section class="hero" style="padding-bottom:0">
+      <h1>One plan. Everything included.</h1>
+      <p>Try Ledgerly Pro free for 14 days. No card required.</p>
+    </section>
+
+    <!-- Variant: control -->
+    <div class="card price-card" id="v-control" hidden>
+      <h2>Pro</h2>
+      <div class="price">$19<small>/month</small></div>
+      <p class="note">Unlimited invoices, reminders and card payments.</p>
+      <a class="btn" id="cta-pricing" href="#">Start free trial</a>
+    </div>
+
+    <!-- Variant: annual_toggle -->
+    <div class="card price-card" id="v-annual_toggle" hidden>
+      <div class="toggle" id="billing-toggle">
+        <span data-period="annual" class="active">Annual <span class="badge">save 21%</span></span>
+        <span data-period="monthly">Monthly</span>
+      </div>
+      <h2>Pro</h2>
+      <div class="price" id="toggle-price">$15<small>/month, billed annually ($180)</small></div>
+      <p class="note">Unlimited invoices, reminders and card payments.</p>
+      <a class="btn" id="cta-pricing-b" href="#">Get started</a>
+    </div>
+  </main>
+  <script>
+    Ledgerly.init();
+    var variant = Ledgerly.experiment.expose();
+    document.getElementById('v-' + variant).hidden = false;
+
+    var billingPeriod = variant === 'control' ? 'monthly' : 'annual';
+
+    // Pricing table for the annual_toggle variant.
+    var PLANS = {
+      annual: { label: '$15<small>/month, billed annually ($180)</small>' },
+      month:  { label: '$19<small>/month</small>' }
+    };
+    // ?fix=toggle demonstrates the one-line fix during the demo.
+    if (new URLSearchParams(location.search).get('fix') === 'toggle') { PLANS.monthly = PLANS.month; }
+
+    document.querySelectorAll('#billing-toggle > span').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var to = el.dataset.period;
+        if (to === billingPeriod) return;
+        if (to === 'monthly') sessionStorage.setItem('ledgerly_wanted_monthly', '1');
+        // PLANTED BUG (for the demo): the key is "month", not "monthly", so this throws
+        // a TypeError and the toggle silently does nothing. Users rage-click it.
+        document.getElementById('toggle-price').innerHTML = PLANS[to].label;
+        document.querySelectorAll('#billing-toggle > span').forEach(function (s) { s.classList.toggle('active', s === el); });
+        Ledgerly.track('Billing Period Toggled', { from: billingPeriod, to: to });
+        billingPeriod = to;
+      });
+    });
+
+    ['cta-pricing', 'cta-pricing-b'].forEach(function (id) {
+      document.getElementById(id).addEventListener('click', function (e) {
+        e.preventDefault();
+        Ledgerly.track('CTA Clicked', { cta_id: 'pricing_start_trial', billing_period: billingPeriod });
+        location.href = 'signup?billing_period=' + billingPeriod;
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ledgerly Ops Console (internal)</title>
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Internal tool: deliberately NOT instrumented with Fullstory. -->
+</head>
+<body>
+  <header>
+    <span class="logo">ledger<span>ly</span> &middot; ops console</span>
+    <nav><span class="note">Mocked systems: experiment platform + billing</span></nav>
+  </header>
+  <main>
+    <h2>1. Experimentation platform readout</h2>
+    <p class="note">What the A/B tool sees: exposures and signups. It never sees revenue or behavior.</p>
+    <table id="readout">
+      <thead><tr><th>Variant</th><th>Exposures</th><th>Signups</th><th>Signup rate</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p id="verdict"></p>
+
+    <h2 style="margin-top:40px">2. Billing system: end of trial</h2>
+    <p class="note">Trials end, the billing system decides who paid, and the backend pushes each outcome to
+      Fullstory through the Server API, joined on the same <code>uid</code> the browser used in <code>setIdentity</code>.</p>
+    <button class="btn" id="run-billing">Run billing cycle</button>
+    <span id="mode" class="note"></span>
+    <pre class="log" id="log">No billing run yet.</pre>
+
+    <p class="note" style="margin-top:40px"><button class="btn secondary" id="reset">Reset demo data</button></p>
+  </main>
+  <script>
+    function pct(x) { return (x * 100).toFixed(1) + '%'; }
+
+    function loadReadout() {
+      fetch('/api/experiment/readout').then(function (r) { return r.json(); }).then(function (data) {
+        var rows = data.rows.sort(function (a, b) { return b.signup_rate - a.signup_rate; });
+        var tbody = document.querySelector('#readout tbody');
+        tbody.textContent = '';
+        rows.forEach(function (r, i) {
+          var tr = tbody.insertRow();
+          [r.variant, r.exposures, r.signups, pct(r.signup_rate), i === 0 && rows.length > 1 ? 'Leading' : ''].forEach(function (v, j) {
+            var td = tr.insertCell();
+            td.textContent = v;
+            if (j === 4) td.className = 'winner';
+          });
+        });
+        var ctl = rows.find(function (r) { return r.variant === 'control'; });
+        var b = rows.find(function (r) { return r.variant === 'annual_toggle'; });
+        if (ctl && b && ctl.signup_rate > 0) {
+          var lift = (b.signup_rate / ctl.signup_rate - 1) * 100;
+          document.getElementById('verdict').innerHTML = 'A/B tool verdict on <b>signup rate</b>: annual_toggle ' +
+            (lift >= 0 ? '+' : '') + lift.toFixed(0) + '% vs control. ' +
+            (lift > 0 ? '<span class="winner">Recommendation: ship annual_toggle.</span>' : 'Keep control.');
+        }
+      });
+    }
+
+    document.getElementById('run-billing').addEventListener('click', function () {
+      document.getElementById('log').textContent = 'Running...';
+      fetch('/api/billing/run', { method: 'POST' }).then(function (r) { return r.json(); }).then(function (data) {
+        document.getElementById('mode').textContent = 'Fullstory Server API: ' + data.fullstory_server_api;
+        document.getElementById('log').textContent = data.log.length
+          ? data.log.map(function (l) { return 'POST ' + l.path + ' -> ' + l.status + '\n' + JSON.stringify(l.body); }).join('\n\n')
+          : 'No open trials to process.';
+      });
+    });
+
+    document.getElementById('reset').addEventListener('click', function () {
+      if (confirm('Clear all demo users and exposures?')) fetch('/api/reset', { method: 'POST' }).then(loadReadout);
+    });
+
+    if (/github\.io$/.test(location.hostname)) {
+      document.querySelector('main').innerHTML = '<h2>The ops console runs locally</h2>' +
+        '<p class="note">It stands in for the experiment platform and billing system, so it needs the Node server: ' +
+        '<code>npm start</code>, then open <code>http://localhost:3000/ops</code>.</p>';
+    } else {
+      loadReadout();
+    }
+  </script>
+</body>
+</html>

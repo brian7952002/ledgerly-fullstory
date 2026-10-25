@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ledgerly - Your first invoice</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="js/fs-snippet.js"></script>
+  <script src="js/attribution.js"></script>
+  <script src="js/experiment.js"></script>
+  <script src="js/analytics.js"></script>
+</head>
+<body data-page="app_first_invoice">
+  <header>
+    <a class="logo" href="./">ledger<span>ly</span></a>
+    <nav><span class="note">Trial: 14 days left</span></nav>
+  </header>
+  <main>
+    <h1 style="text-align:center">Welcome! Let's send your first invoice.</h1>
+    <form id="invoice-form">
+      <label>Client name <input name="client" class="fs-mask" required /></label>
+      <label>Amount (USD) <input name="amount" type="number" min="1" required class="fs-mask" /></label>
+      <label>Due in
+        <select name="due"><option>7 days</option><option selected>14 days</option><option>30 days</option></select>
+      </label>
+      <button class="btn" type="submit">Send invoice</button>
+    </form>
+    <div id="done" class="success" hidden style="max-width:420px;margin:24px auto">
+      Invoice sent! Your client will get a payment link by email.
+    </div>
+  </main>
+  <script>
+    Ledgerly.init();
+    var uid = localStorage.getItem('ledgerly_uid');
+
+    document.getElementById('invoice-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var amount = Number(e.target.amount.value);
+      // Bucket the amount: useful for segmentation, not tied to a person's actual numbers.
+      var bucket = amount < 500 ? 'under_500' : amount < 2000 ? '500_to_2000' : 'over_2000';
+      Ledgerly.track('First Invoice Sent', { invoice_amount_bucket: bucket });
+      Ledgerly.api('/api/activity', { uid: uid, type: 'invoice_sent' });
+      e.target.hidden = true;
+      document.getElementById('done').hidden = false;
+    });
+  </script>
+</body>
+</html>
