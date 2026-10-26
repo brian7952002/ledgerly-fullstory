@@ -172,6 +172,11 @@
       Ledgerly.setPage('app_' + view);
     }
     window.addEventListener('hashchange', route);
+    // A link to the hash you're already on fires no hashchange; re-run the route anyway.
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest('a[href^="#"]');
+      if (a && a.getAttribute('href') === location.hash) route();
+    });
 
     // ---- send an invoice ----
     document.getElementById('invoice-form').addEventListener('submit', function (e) {
@@ -188,6 +193,8 @@
       }
       Ledgerly.api('/api/activity', { uid: uid, type: 'invoice_sent' });
       e.target.reset();
+      // Leave #invoices/new so the "New invoice" link changes the hash (and works) next time.
+      history.replaceState(null, '', '#invoices');
       document.getElementById('new-invoice').hidden = true;
       document.getElementById('done').hidden = false;
       render();
