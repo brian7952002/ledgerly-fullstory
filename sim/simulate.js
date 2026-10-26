@@ -77,10 +77,23 @@ async function visitor(browser, n) {
 
     if (Math.random() > ACTIVATE[campaign.key]) return Object.assign(result, { outcome: 'signed_up' });
 
+    await page.click('#cta-first-invoice');
+    await pause(page, 500, 1200);
     await page.fill('input[name=client]', 'Acme Co');
     await page.fill('input[name=amount]', String(200 + Math.floor(Math.random() * 3000)));
     await pause(page);
     await page.click('#invoice-form button[type=submit]');
+    // Some activated users look around and a few signal intent to upgrade.
+    await pause(page, 800, 1600);
+    await page.click('.sidebar a[data-route="invoices"]');
+    await pause(page, 600, 1400);
+    if (Math.random() < 0.35) {
+      await page.click('.sidebar a[data-route="billing"]');
+      await pause(page, 800, 1600);
+      if (variant === 'control' || Math.random() < 0.5) await page.check('input[name=period][value=monthly]');
+      else await page.check('input[name=period][value=annual]');
+      await page.click('#cta-upgrade');
+    }
     return Object.assign(result, { outcome: 'activated' });
   } catch (err) {
     return Object.assign(result, { outcome: 'error', error: err.message.split('\n')[0] });

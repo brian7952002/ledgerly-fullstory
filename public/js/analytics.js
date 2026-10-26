@@ -21,6 +21,12 @@ window.Ledgerly = window.Ledgerly || {};
     fs('trackEvent', { name: name, properties: Object.assign(context(), properties || {}) });
   };
 
+  // For in-app views that change without a page load (the app's hash routes).
+  L.setPage = function (pageName) {
+    document.body.dataset.page = pageName;
+    fs('setProperties', { type: 'page', properties: { pageName: pageName } });
+  };
+
   L.setUserProps = function (properties) {
     fs('setProperties', { type: 'user', properties: properties });
   };

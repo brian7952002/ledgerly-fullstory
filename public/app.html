@@ -3,46 +3,207 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ledgerly - Your first invoice</title>
+  <title>Ledgerly - Dashboard</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="js/fs-snippet.js"></script>
   <script src="js/attribution.js"></script>
   <script src="js/experiment.js"></script>
   <script src="js/analytics.js"></script>
 </head>
-<body data-page="app_first_invoice">
+<body data-page="app_dashboard" class="app">
   <header>
-    <a class="logo" href="./">ledger<span>ly</span></a>
-    <nav><span class="note">Trial: 14 days left</span></nav>
+    <a class="logo" href="#dashboard">ledger<span>ly</span></a>
+    <nav class="app-top">
+      <span class="badge trial" id="trial-badge">Trial: 14 days left</span>
+      <a class="btn small" href="#billing" id="cta-upgrade-header">Upgrade</a>
+      <span class="avatar fs-mask" id="avatar">FL</span>
+    </nav>
   </header>
-  <main>
-    <h1 style="text-align:center">Welcome! Let's send your first invoice.</h1>
-    <form id="invoice-form">
-      <label>Client name <input name="client" class="fs-mask" required /></label>
-      <label>Amount (USD) <input name="amount" type="number" min="1" required class="fs-mask" /></label>
-      <label>Due in
-        <select name="due"><option>7 days</option><option selected>14 days</option><option>30 days</option></select>
-      </label>
-      <button class="btn" type="submit">Send invoice</button>
-    </form>
-    <div id="done" class="success" hidden style="max-width:420px;margin:24px auto">
-      Invoice sent! Your client will get a payment link by email.
-    </div>
-  </main>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a href="#dashboard" data-route="dashboard">Dashboard</a>
+      <a href="#invoices" data-route="invoices">Invoices</a>
+      <a href="#clients" data-route="clients">Clients</a>
+      <a href="#billing" data-route="billing">Plan &amp; billing</a>
+      <a href="./?reset=1" class="signout">Sign out</a>
+    </aside>
+
+    <main class="app-main">
+      <!-- Dashboard -->
+      <section data-view="dashboard">
+        <h1 id="greeting">Welcome to Ledgerly</h1>
+        <div class="kpis">
+          <div class="card kpi"><span class="note">Outstanding</span><strong class="fs-mask" id="kpi-outstanding">$0</strong></div>
+          <div class="card kpi"><span class="note">Paid</span><strong class="fs-mask" id="kpi-paid">$0</strong></div>
+          <div class="card kpi"><span class="note">Invoices sent</span><strong id="kpi-count">0</strong></div>
+        </div>
+        <div class="card" id="onboarding">
+          <h3>Get set up</h3>
+          <ul class="checklist">
+            <li class="done">Create your account</li>
+            <li id="step-invoice">Send your first invoice</li>
+            <li>Add your logo</li>
+            <li>Turn on payment reminders</li>
+          </ul>
+          <a class="btn" id="cta-first-invoice" href="#invoices/new">Create your first invoice</a>
+        </div>
+        <h3>Recent invoices</h3>
+        <table class="invoices"><thead><tr><th>Client</th><th>Amount</th><th>Due</th><th>Status</th></tr></thead><tbody></tbody></table>
+        <p class="note empty">No invoices yet.</p>
+      </section>
+
+      <!-- Invoices -->
+      <section data-view="invoices" hidden>
+        <div class="row"><h1>Invoices</h1><a class="btn" href="#invoices/new" id="cta-new-invoice">New invoice</a></div>
+        <div class="card" id="new-invoice" hidden>
+          <h3>New invoice</h3>
+          <form id="invoice-form">
+            <label>Client name <input name="client" class="fs-mask" required /></label>
+            <label>Amount (USD) <input name="amount" type="number" min="1" required class="fs-mask" /></label>
+            <label>Due in
+              <select name="due"><option value="7">7 days</option><option value="14" selected>14 days</option><option value="30">30 days</option></select>
+            </label>
+            <button class="btn" type="submit">Send invoice</button>
+          </form>
+        </div>
+        <div id="done" class="success" hidden>Invoice sent! Your client will get a payment link by email.</div>
+        <table class="invoices"><thead><tr><th>Client</th><th>Amount</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody></tbody></table>
+        <p class="note empty">No invoices yet.</p>
+      </section>
+
+      <!-- Clients -->
+      <section data-view="clients" hidden>
+        <h1>Clients</h1>
+        <table><thead><tr><th>Client</th><th>Invoices</th><th>Billed</th></tr></thead><tbody id="clients-body"></tbody></table>
+        <p class="note empty">Clients appear here once you invoice them.</p>
+      </section>
+
+      <!-- Plan & billing -->
+      <section data-view="billing" hidden>
+        <h1>Plan &amp; billing</h1>
+        <div class="card price-card" style="margin:0;max-width:480px;text-align:left">
+          <p class="note" id="plan-status">You're on the free trial. 14 days left.</p>
+          <h2>Ledgerly Pro</h2>
+          <label class="radio"><input type="radio" name="period" value="monthly" checked /> Monthly: $19/month</label>
+          <label class="radio"><input type="radio" name="period" value="annual" /> Annual: $180/year ($15/month)</label>
+          <button class="btn" id="cta-upgrade">Upgrade to Pro</button>
+          <div class="success" id="upgrade-done" hidden>Thanks! Your plan switches to Pro when the trial ends.</div>
+          <p class="note">Payments are handled by our billing provider (mocked in this demo). The billing system, not this page, tells Fullstory who actually paid.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
   <script>
     Ledgerly.init();
     var uid = localStorage.getItem('ledgerly_uid');
+    var STORE = 'ledgerly_invoices';
+    var routes = ['dashboard', 'invoices', 'clients', 'billing'];
 
+    function invoices() {
+      try { return JSON.parse(localStorage.getItem(STORE)) || []; } catch (e) { return []; }
+    }
+    function save(list) { localStorage.setItem(STORE, JSON.stringify(list)); }
+    function money(n) { return '$' + n.toLocaleString('en-US'); }
+
+    // ---- views ----
+    function render() {
+      var list = invoices();
+      var outstanding = 0, paid = 0;
+      list.forEach(function (inv) { if (inv.status === 'Paid') paid += inv.amount; else outstanding += inv.amount; });
+      document.getElementById('kpi-outstanding').textContent = money(outstanding);
+      document.getElementById('kpi-paid').textContent = money(paid);
+      document.getElementById('kpi-count').textContent = list.length;
+      document.getElementById('onboarding').hidden = list.length > 0;
+      document.getElementById('step-invoice').className = list.length ? 'done' : '';
+
+      document.querySelectorAll('table.invoices').forEach(function (table, t) {
+        var tbody = table.tBodies[0];
+        tbody.textContent = '';
+        list.slice().reverse().slice(0, t === 0 ? 5 : 100).forEach(function (inv) {
+          var tr = tbody.insertRow();
+          [inv.client, money(inv.amount), inv.due, inv.status].forEach(function (v, j) {
+            var td = tr.insertCell();
+            td.textContent = v;
+            if (j < 2) td.className = 'fs-mask';
+          });
+          if (t === 1) {
+            var td = tr.insertCell();
+            if (inv.status !== 'Paid') {
+              var b = document.createElement('button');
+              b.className = 'btn secondary small';
+              b.textContent = 'Mark paid';
+              b.onclick = function () { inv.status = 'Paid'; save(list); render(); };
+              td.appendChild(b);
+            }
+          }
+        });
+        table.nextElementSibling.hidden = list.length > 0;
+      });
+
+      var clients = {};
+      list.forEach(function (inv) {
+        clients[inv.client] = clients[inv.client] || { count: 0, total: 0 };
+        clients[inv.client].count++;
+        clients[inv.client].total += inv.amount;
+      });
+      var body = document.getElementById('clients-body');
+      body.textContent = '';
+      Object.keys(clients).forEach(function (name) {
+        var tr = body.insertRow();
+        [name, clients[name].count, money(clients[name].total)].forEach(function (v, j) {
+          var td = tr.insertCell();
+          td.textContent = v;
+          if (j !== 1) td.className = 'fs-mask';
+        });
+      });
+      body.parentElement.nextElementSibling.hidden = list.length > 0;
+    }
+
+    // ---- hash routing: each view is its own Fullstory Page via pageName ----
+    function route() {
+      var parts = location.hash.replace('#', '').split('/');
+      var view = routes.indexOf(parts[0]) > -1 ? parts[0] : 'dashboard';
+      document.querySelectorAll('[data-view]').forEach(function (s) { s.hidden = s.dataset.view !== view; });
+      document.querySelectorAll('.sidebar a[data-route]').forEach(function (a) { a.classList.toggle('active', a.dataset.route === view); });
+      document.getElementById('new-invoice').hidden = !(view === 'invoices' && parts[1] === 'new');
+      document.getElementById('done').hidden = true;
+      Ledgerly.setPage('app_' + view);
+    }
+    window.addEventListener('hashchange', route);
+
+    // ---- send an invoice ----
     document.getElementById('invoice-form').addEventListener('submit', function (e) {
       e.preventDefault();
+      var list = invoices();
       var amount = Number(e.target.amount.value);
-      // Bucket the amount: useful for segmentation, not tied to a person's actual numbers.
-      var bucket = amount < 500 ? 'under_500' : amount < 2000 ? '500_to_2000' : 'over_2000';
-      Ledgerly.track('First Invoice Sent', { invoice_amount_bucket: bucket });
+      var due = new Date(Date.now() + Number(e.target.due.value) * 864e5).toISOString().slice(0, 10);
+      list.push({ client: e.target.client.value, amount: amount, due: due, status: 'Sent' });
+      save(list);
+      if (list.length === 1) {
+        // Bucket the amount: useful for segmentation, not tied to a person's actual numbers.
+        var bucket = amount < 500 ? 'under_500' : amount < 2000 ? '500_to_2000' : 'over_2000';
+        Ledgerly.track('First Invoice Sent', { invoice_amount_bucket: bucket });
+      }
       Ledgerly.api('/api/activity', { uid: uid, type: 'invoice_sent' });
-      e.target.hidden = true;
+      e.target.reset();
+      document.getElementById('new-invoice').hidden = true;
       document.getElementById('done').hidden = false;
+      render();
     });
+
+    // ---- upgrade intent (the real conversion comes from billing, server-side) ----
+    document.getElementById('cta-upgrade').addEventListener('click', function () {
+      var period = document.querySelector('input[name=period]:checked').value;
+      Ledgerly.track('Upgrade Clicked', { billing_period: period });
+      document.getElementById('upgrade-done').hidden = false;
+    });
+
+    // Header greeting uses the CRM id, never the person's name (no PII on screen to mask).
+    if (uid) document.getElementById('greeting').textContent = 'Welcome, Freelancer ' + uid.slice(4);
+    render();
+    route();
   </script>
 </body>
 </html>

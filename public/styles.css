@@ -36,3 +36,37 @@ pre.log { background: #0f172a; color: #cbd5e1; padding: 16px; border-radius: 8px
 .note { font-size: 13px; color: var(--muted); }
 .success { background: #ecfdf5; border: 1px solid #a7f3d0; color: var(--ok); padding: 16px; border-radius: 8px; }
 @media (max-width: 700px) { .features { grid-template-columns: 1fr; } .hero h1 { font-size: 32px; } }
+
+/* ---- in-app (app.html) ---- */
+.btn.small { padding: 6px 12px; font-size: 14px; }
+.app-top { display: flex; align-items: center; gap: 12px; }
+.app-top a.btn { margin-left: 0; color: #fff; }
+.badge.trial { background: #eef2ff; color: var(--brand); }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--brand); color: #fff; display: grid; place-items: center; font-size: 13px; font-weight: 700; }
+.app-shell { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 65px); }
+.sidebar { background: #fff; border-right: 1px solid var(--line); padding: 24px 12px; display: flex; flex-direction: column; gap: 4px; }
+.sidebar a { padding: 10px 14px; border-radius: 8px; color: var(--ink); text-decoration: none; }
+.sidebar a:hover { background: var(--bg); }
+.sidebar a.active { background: #eef2ff; color: var(--brand); font-weight: 600; }
+.sidebar .signout { margin-top: auto; color: var(--muted); }
+.app-main { padding: 32px 40px; max-width: 980px; }
+.app-main h1 { margin-top: 0; }
+.app-main section > * + * { margin-top: 20px; }
+.kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.kpi strong { display: block; font-size: 28px; margin-top: 4px; }
+.checklist { list-style: none; padding: 0; margin: 0 0 16px; }
+.checklist li { padding: 6px 0 6px 28px; position: relative; }
+.checklist li::before { content: ''; position: absolute; left: 0; top: 9px; width: 16px; height: 16px; border: 2px solid var(--line); border-radius: 50%; }
+.checklist li.done { color: var(--muted); text-decoration: line-through; }
+.checklist li.done::before { background: var(--ok); border-color: var(--ok); }
+.row { display: flex; align-items: center; justify-content: space-between; }
+.app-main form { margin: 0; }
+label.radio { display: flex; gap: 8px; align-items: center; color: var(--ink); font-size: 16px; margin: 8px 0; }
+@media (max-width: 700px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px; }
+  .sidebar .signout { margin-top: 0; }
+  .sidebar a { white-space: nowrap; }
+  .app-main { padding: 20px 16px; }
+  .kpis { grid-template-columns: 1fr; }
+}
